@@ -20,6 +20,16 @@ const { Success } = require("dotnet-responses");
 
 app.get("/:appId", function(req, res)
 {
+    // TODO: Get all info on a discord bot.
+    Success.json({
+        res,
+        message: "Pong",
+    });
+});
+
+app.get("/:appId/:serverId", function(req, res)
+{
+    // TODO: Get info on a discord bot for a specific server.
     Success.json({
         res,
         message: "Pong",
@@ -36,22 +46,16 @@ app.get("/:appId", function(req, res)
 
 app.post("/create", function(req, res)
 {
+    // TODO: Create discord bot as app in app microservice.
     Success.json({
         res,
         message: "Pong",
     });
 });
 
-
-
-
-
-/***********
- * PATCHES *
- ***********/
-
-app.patch("/:appId", function(req, res)
+app.post("/:appId", function(req, res)
 {
+    // TODO: Upsert server ID and prefix into MongoDB.
     Success.json({
         res,
         message: "Pong",
