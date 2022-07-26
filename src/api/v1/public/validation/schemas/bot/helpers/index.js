@@ -1,11 +1,11 @@
 const appSchemas = require("./app");
 const dataObjSchemas = require("./dataObj");
-const serverSchemas = require("./server");
+const serversSchemas = require("./servers");
 
 
 
 module.exports = {
     ...appSchemas,
     ...dataObjSchemas,
-    ...serverSchemas,
+    ...serversSchemas,
 };

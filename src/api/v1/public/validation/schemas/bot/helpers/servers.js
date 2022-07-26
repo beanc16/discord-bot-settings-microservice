@@ -9,9 +9,14 @@ const server = Joi.object({
 });
 const serverRequired = server.required();
 
+const servers = Joi.array().items(server);
+const serversRequired = servers.required();
+
 
 
 module.exports = {
     server,
     serverRequired,
+    servers,
+    serversRequired,
 };
