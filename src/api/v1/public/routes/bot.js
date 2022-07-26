@@ -44,15 +44,6 @@ app.get("/:appId/:serverId", function(req, res)
  * POSTS *
  *********/
 
-app.post("/create", function(req, res)
-{
-    // TODO: Create discord bot as app in app microservice.
-    Success.json({
-        res,
-        message: "Pong",
-    });
-});
-
 app.post("/:appId", function(req, res)
 {
     // TODO: Upsert server ID and prefix into MongoDB.
