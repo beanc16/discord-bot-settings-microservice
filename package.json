@@ -1,7 +1,7 @@
 {
-  "name": "template-microservice",
+  "name": "discord-bot-settings-microservice",
   "version": "1.0.0",
-  "description": "A microservice template",
+  "description": "A microservice for performing CRUD operations on discord bot settings.",
   "main": "index.js",
   "scripts": {
     "start-dev": "node index.js",

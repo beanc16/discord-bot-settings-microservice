@@ -1,7 +1,7 @@
-//const myModel = require("./myModel");
+const Bot = require("./Bot");
 
 
 
 module.exports = {
-    //myModel,
+    Bot,
 };
