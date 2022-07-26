@@ -1,6 +1,6 @@
-# template-microservice-api
+# discord-bot-settings-microservice
 
-A node server template for microservices to be hosted on Heroku.
+A microservice for performing CRUD operations on discord bot settings.
 
 <!--
 API Documentation:
@@ -8,4 +8,4 @@ API Documentation:
 -->
 
 Back-End Code (Node.js & MongoDb):
-https://github.com/beanc16/template-microservice
+https://github.com/beanc16/discord-bot-settings-microservice
