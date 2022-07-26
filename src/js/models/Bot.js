@@ -14,12 +14,6 @@ class Bot
 
         this.appId = appId;
         this.servers = servers;
-        /*
-        this.servers = [{
-            serverId,
-            prefix,
-        }];
-        */
         this.data = (data) ? data : {};
     }
 }
