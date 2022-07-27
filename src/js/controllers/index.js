@@ -1,7 +1,7 @@
-//const MyController = require("./MyController");
+const BotController = require("./BotController");
 
 
 
 module.exports = {
-    //MyController,
+    BotController,
 };
