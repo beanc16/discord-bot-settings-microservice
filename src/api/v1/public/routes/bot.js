@@ -92,26 +92,26 @@ app.post("/create", function(req, res)
             });
 
             BotController.insertOne(bot)
-            .then((result) => _sendBotCreateSuccess(res, result))
-            .catch((err) => _sendBotCreateError(res, err));
+            .then((result) => _sendBotCreateSuccess(res, result, app))
+            .catch((err) => _sendBotCreateError(res, err, app));
         })
         .catch((err) => _sendAppMicroserviceError(req, res, err));
     })
     .catch((err) => _sendPayloadValidationError(res, err));
 });
 
-function _sendBotCreateSuccess(res, result)
+function _sendBotCreateSuccess(res, result, app)
 {
     Success.json({
         res,
-        message: "Successfully created bot",
+        message: `Successfully created a bot named ${app.displayName}`,
         data: result,
     });
 }
 
-function _sendBotCreateError(res, err)
+function _sendBotCreateError(res, err, app)
 {
-    const errMsg = "Failed to create bot";
+    const errMsg = `Failed to create a bot named ${app.displayName}`;
     logger.error(errMsg, err);
 
     InternalServerError.json({
