@@ -88,7 +88,7 @@ app.use((err, req, res, next) => errorHandler(err, req, res, next));
  * PORT *
  ********/
 
-app.listen(serverInfo.port, function ()
+app.listen(serverInfo.port, function (err)
 {
   if (err) logger.error("Error in server setup", err);
   logger.info(`App listening on port ${serverInfo.port}`);
