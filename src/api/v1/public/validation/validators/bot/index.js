@@ -1,11 +1,11 @@
-//const getValidators = require("./get");
+const getValidators = require("./get");
 const createValidators = require("./create");
 //const upsertValidators = require("./upsert");
 
 
 
 module.exports = {
-    //...getValidators,
+    ...getValidators,
     ...createValidators,
     //...upsertValidators,
 };

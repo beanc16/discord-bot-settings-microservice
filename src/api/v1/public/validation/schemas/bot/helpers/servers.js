@@ -4,7 +4,10 @@ const { JoiRequired } = require("@beanc16/joi-helpers");
 
 
 const server = Joi.object({
-    serverId: JoiRequired.number(),
+    serverId: JoiRequired.alternatives().try(
+        JoiRequired.number(),
+        JoiRequired.string(),
+    ),
     prefix: JoiRequired.string(),
 });
 const serverRequired = server.required();
