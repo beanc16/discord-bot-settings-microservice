@@ -38,6 +38,7 @@ const {
 // Response
 const {
     Success,
+    ValidationError,
     InternalServerError,
 } = require("dotnet-responses");
 
@@ -83,7 +84,7 @@ app.post("/create", function(req, res)
         AppMicroservice.v1.create(req.body.app)
         .then(function (result)
         {
-            const app = result.data.data[0];
+            const app = result.data.data;
             const bot = new Bot({
                 appId: app._id,
                 servers: req.body.servers,
@@ -166,6 +167,7 @@ function _sendAppMicroserviceError(req, res, err)
     {
         ValidationError.json({
             res,
+            message: "App validation error",
             data: {
                 ...req.query,
             },
