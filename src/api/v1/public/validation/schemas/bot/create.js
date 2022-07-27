@@ -4,7 +4,6 @@ const botSchemas = require("./helpers");
 
 
 
-// Create app
 const createBotSchema = JoiRequired.object({
     app: botSchemas.appRequired,
     servers: botSchemas.servers,
