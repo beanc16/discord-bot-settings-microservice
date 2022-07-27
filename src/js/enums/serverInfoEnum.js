@@ -1,5 +1,5 @@
 // Development environment
-const devPort = 8000;
+const devPort = 8003;
 const devBaseUrl = "http://localhost";
 const devUrl = `${devBaseUrl}:${devPort}`;
 
