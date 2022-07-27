@@ -13,7 +13,7 @@ class Bot
         }
 
         this.appId = appId;
-        this.servers = servers;
+        this.servers = (servers) ? servers : [];
         this.data = (data) ? data : {};
     }
 }
