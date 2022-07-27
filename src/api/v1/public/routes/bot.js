@@ -123,9 +123,15 @@ function _sendBotCreateError(res, err, app)
 
 
 
-app.post("/:appId", function(req, res)
+
+
+/***********
+ * PATCHES *
+ ***********/
+
+app.patch("/:appId", function(req, res)
 {
-    // TODO: Upsert server ID and prefix into MongoDB.
+    // TODO: Upsert servers array (ID and/or prefix) and data on existing bot.
     Success.json({
         res,
         message: "Pong",
