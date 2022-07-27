@@ -5,7 +5,7 @@ const botSchemas = require("./helpers");
 
 
 // Create app
-const createAppSchema = JoiRequired.object({
+const createBotSchema = JoiRequired.object({
     app: botSchemas.appRequired,
     servers: botSchemas.servers,
     data: botSchemas.dataObj,
@@ -14,5 +14,5 @@ const createAppSchema = JoiRequired.object({
 
 
 module.exports = {
-    createAppSchema,
+    createBotSchema,
 };
