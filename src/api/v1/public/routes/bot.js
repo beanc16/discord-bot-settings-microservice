@@ -74,7 +74,7 @@ app.get("/:appId", function(req, res)
 
 app.get("/:appId/:serverId", function(req, res)
 {
-    // TODO: Get info on a discord bot for a specific server.
+    // TODO: Get info on a specific server that a discord bot is in.
     Success.json({
         res,
         message: "Pong",
