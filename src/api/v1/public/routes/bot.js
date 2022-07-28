@@ -31,6 +31,8 @@ const { BotController } = require("../../../../js/controllers");
 
 // Validation
 const {
+    validateGetBotByAppIdPayload,
+    validateGetBotByAppAndServerIdPayload,
     validateCreateBotPayload,
 } = require("../validation");
 
@@ -40,6 +42,7 @@ const {
     Success,
     ValidationError,
     InternalServerError,
+    getResponseByStatusCode,
 } = require("dotnet-responses");
 
 
@@ -52,11 +55,21 @@ const {
 
 app.get("/:appId", function(req, res)
 {
-    // TODO: Get all info on a discord bot.
-    Success.json({
-        res,
-        message: "Pong",
-    });
+    validateGetBotByAppIdPayload(req.params)
+    .then(function (_)
+    {
+        AppMicroservice.v1.get({ id: req.params.appId })
+        .then(function (result)
+        {
+            const app = result.data.data[0];
+
+            BotController.getMostRecent({ appId: req.params.appId })
+            .then((result) => _sendBotGetSuccess(res, result, app))
+            .catch((err) => _sendBotGetError(res, err, app));
+        })
+        .catch((err) => _sendAppMicroserviceError(req, res, err, "retrieving"));
+    })
+    .catch((err) => _sendPayloadValidationError(res, err));
 });
 
 app.get("/:appId/:serverId", function(req, res)
@@ -67,6 +80,27 @@ app.get("/:appId/:serverId", function(req, res)
         message: "Pong",
     });
 });
+
+function _sendBotGetSuccess(res, result, app)
+{
+    Success.json({
+        res,
+        message: `Successfully retrieved a bot named ${app.displayName}`,
+        data: result,
+    });
+}
+
+function _sendBotGetError(res, err, app)
+{
+    const errMsg = `Failed to retrieve a bot${(app && app.displayName) ? ` named ${app.displayName}` : ""}`;
+    logger.error(errMsg, err);
+
+    InternalServerError.json({
+        res,
+        message: errMsg,
+        error: err,
+    });
+}
 
 
 
@@ -163,27 +197,28 @@ function _sendPayloadValidationError(res, err)
     });
 }
 
-function _sendAppMicroserviceError(req, res, err)
+function _sendAppMicroserviceError(req, res, err, verbing = "creating")
 {
     const statusCode = (err && err.response && err.response.status)
         ? err.response.status
         : 500;
 
-    if (statusCode === 422)
+    if (statusCode !== 500)
     {
-        ValidationError.json({
+        const Response = getResponseByStatusCode(statusCode);
+
+        Response.json({
             res,
-            message: "App validation error",
-            data: {
-                ...req.query,
-            },
-            error: err.response.data.error,
+            message: (statusCode === 422)
+                ? "App validation error"
+                : err.response.data.message,
+            error: err.response.data.err,
         });
     }
 
     else
     {
-        const errMsg = "An unknown error occurred while creating an app";
+        const errMsg = `An unknown error occurred while ${verbing} an app`;
         logger.error(errMsg, err.response.data.error || err, req.query, err.response.data);
 
         InternalServerError.json({
@@ -193,14 +228,6 @@ function _sendAppMicroserviceError(req, res, err)
             error: err.response.data.error || err,
         });
     }
-}
-
-function _getAppDataFromQuery(req)
-{
-    return {
-        id: (req.query.appId) || process.env.FILE_STORAGE_MICROSERVICE_APP_ID || undefined,
-        searchName: req.query.appName || undefined,
-    };
 }
 
 
