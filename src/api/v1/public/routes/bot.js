@@ -34,6 +34,7 @@ const {
     validateGetBotByAppIdPayload,
     validateGetBotByAppAndServerIdPayload,
     validateCreateBotPayload,
+    validateUpdateBotPayload,
 } = require("../validation");
 
 
@@ -43,6 +44,7 @@ const {
     ValidationError,
     InternalServerError,
     getResponseByStatusCode,
+    NotFound,
 } = require("dotnet-responses");
 
 
@@ -72,31 +74,53 @@ app.get("/:appId", function(req, res)
     .catch((err) => _sendPayloadValidationError(res, err));
 });
 
-app.get("/:appId/:serverId", function(req, res)
-{
-    validateGetBotByAppAndServerIdPayload(req.params)
-    .then(function (_)
-    {
-        AppMicroservice.v1.get({ id: req.params.appId })
-        .then(function (result)
-        {
-            const app = result.data.data[0];
+app.get("/:appId/:serverId", _getBotByAppIdAndServerId);
 
-            BotController.getMostRecent({ appId: req.params.appId }, {
-                // Only include one server element: the one with the given serverId
-                "servers": {
-                    "$elemMatch": {
-                        "serverId": req.params.serverId
+async function _getBotByAppIdAndServerId(req, res)
+{
+    return new Promise(function (resolve, reject)
+    {
+        validateGetBotByAppAndServerIdPayload(req.params)
+        .then(function (_)
+        {
+            AppMicroservice.v1.get({ id: req.params.appId })
+            .then(function (result)
+            {
+                const app = result.data.data[0];
+    
+                BotController.getMostRecent({ appId: req.params.appId }, {
+                    // Only include one server element: the one with the given serverId
+                    "servers": {
+                        "$elemMatch": {
+                            "serverId": req.params.serverId
+                        }
                     }
-                }
+                })
+                .then(function (result)
+                {
+                    const serverIdExists = result.servers.some(function (server)
+                    {
+                        return (server && server.serverId === req.params.serverId);
+                    });
+    
+                    if (serverIdExists)
+                    {
+                        _sendBotGetSuccess(res, result, app);
+                        resolve(app);
+                    }
+    
+                    else
+                    {
+                        _sendBotGetServerDoesNotExistError(req, res, result, app);
+                    }
+                })
+                .catch((err) => _sendBotGetError(res, err, app));
             })
-            .then((result) => _sendBotGetSuccess(res, result, app))
-            .catch((err) => _sendBotGetError(res, err, app));
+            .catch((err) => _sendAppMicroserviceError(req, res, err, "retrieving"));
         })
-        .catch((err) => _sendAppMicroserviceError(req, res, err, "retrieving"));
-    })
-    .catch((err) => _sendPayloadValidationError(res, err));
-});
+        .catch((err) => _sendPayloadValidationError(res, err));
+    });
+}
 
 function _sendBotGetSuccess(res, result, app)
 {
@@ -116,6 +140,15 @@ function _sendBotGetError(res, err, app)
         res,
         message: errMsg,
         error: err,
+    });
+}
+
+function _sendBotGetServerDoesNotExistError(req, res, result, app)
+{
+    NotFound.json({
+        res,
+        message: `A bot named ${app.displayName} was found. However, it does not contain a server with a serverId of ${req.params.serverId}.`,
+        data: result,
     });
 }
 
@@ -180,14 +213,49 @@ function _sendBotCreateError(res, err, app)
  * PATCHES *
  ***********/
 
-app.patch("/:appId", function(req, res)
+app.patch("/:appId/:serverId", function(req, res)
 {
-    // TODO: Upsert servers array (ID and/or prefix) and data on existing bot.
-    Success.json({
-        res,
-        message: "Pong",
+    _getBotByAppIdAndServerId(req, res)
+    .then(function (app)
+    {
+        validateUpdateBotPayload(req.body)
+        .then(function (__)
+        {
+            BotController.findOneAndUpdate({ appId: req.params.appId }, {
+                // Only update one server element: the one with the given serverId
+                "servers.$[element].prefix": req.body.serverPrefix
+            }, {
+                arrayFilters: [{
+                    // Update the given server's prefix
+                    "element.serverId": req.params.serverId
+                }]
+            })
+            .then((result) => _sendBotUpdateSuccess(res, result, app))
+            .catch((err) => _sendBotUpdateError(res, err, app));
+        });
     });
 });
+
+function _sendBotUpdateSuccess(res, result, app)
+{
+    Success.json({
+        res,
+        message: `Successfully updated a bot named ${app.displayName}`,
+        data: result,
+    });
+}
+
+function _sendBotUpdateError(res, err, app)
+{
+    const errMsg = `Failed to update a bot named ${app.displayName}`;
+    logger.error(errMsg, err);
+
+    InternalServerError.json({
+        res,
+        message: errMsg,
+        error: err,
+    });
+}
 
 
 
@@ -196,15 +264,6 @@ app.patch("/:appId", function(req, res)
 /***********
  * HELPERS *
  ***********/
-
-function _sendQueryValidationError(res, err)
-{
-    ValidationError.json({
-        res,
-        message: "Query Validation Error",
-        error: err,
-    });
-}
 
 function _sendPayloadValidationError(res, err)
 {
