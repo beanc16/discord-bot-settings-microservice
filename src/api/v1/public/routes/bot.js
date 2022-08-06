@@ -76,7 +76,7 @@ app.get("/:appId", function(req, res)
 
 app.get("/:appId/:serverId", _getBotByAppIdAndServerId);
 
-async function _getBotByAppIdAndServerId(req, res)
+async function _getBotByAppIdAndServerId(req, res, sendResponseOnServerDoesNotExist = true)
 {
     return new Promise(function (resolve, reject)
     {
@@ -105,13 +105,28 @@ async function _getBotByAppIdAndServerId(req, res)
     
                     if (serverIdExists)
                     {
-                        _sendBotGetSuccess(res, result, app);
+                        if (sendResponseOnServerDoesNotExist)
+                        {
+                            _sendBotGetSuccess(res, result, app);
+                        }
                         resolve(app);
                     }
     
                     else
                     {
-                        _sendBotGetServerDoesNotExistError(req, res, result, app);
+                        if (sendResponseOnServerDoesNotExist)
+                        {
+                            _sendBotGetServerDoesNotExistError(req, res, result, app);
+                        }
+
+                        else
+                        {
+                            reject({
+                                statusCode: 404,
+                                bot: new Bot({ ...result, appId: app._id }),
+                                app,
+                            });
+                        }
                     }
                 })
                 .catch((err) => _sendBotGetError(res, err, app));
@@ -215,26 +230,61 @@ function _sendBotCreateError(res, err, app)
 
 app.patch("/:appId/:serverId", function(req, res)
 {
-    _getBotByAppIdAndServerId(req, res)
-    .then(function (app)
+    validateUpdateBotPayload(req.body)
+    .then(function (__)
     {
-        validateUpdateBotPayload(req.body)
-        .then(function (__)
+        _getBotByAppIdAndServerId(req, res, false)
+        .then(function (app)
         {
-            BotController.findOneAndUpdate({ appId: req.params.appId }, {
-                // Only update one server element: the one with the given serverId
-                "servers.$[element].prefix": req.body.serverPrefix
-            }, {
-                arrayFilters: [{
-                    // Update the given server's prefix
-                    "element.serverId": req.params.serverId
-                }]
-            })
-            .then((result) => _sendBotUpdateSuccess(res, result, app))
-            .catch((err) => _sendBotUpdateError(res, err, app));
+            // Update
+            _updateExistingPrefix(req, res, app);
+        })
+        .catch(function (response)
+        {
+            // Insert new prefix
+            _insertNewPrefixOnExistingBot(req, res, response);
         });
-    });
+    })
+    .catch((err) => _sendPayloadValidationError(res, err));
 });
+
+function _updateExistingPrefix(req, res, app)
+{
+    BotController.findOneAndUpdate({ appId: req.params.appId }, {
+        // Only update one server element: the one with the given serverId
+        "servers.$[element].prefix": req.body.serverPrefix
+    }, {
+        arrayFilters: [{
+            // Update the given server's prefix
+            "element.serverId": req.params.serverId
+        }]
+    })
+    .then((result) => _sendBotUpdateSuccess(res, result, app))
+    .catch((err) => _sendBotUpdateError(res, err, app));
+}
+
+function _insertNewPrefixOnExistingBot(req, res, response)
+{
+    // The bot was found but the server does not exist.
+    if (response && response.statusCode === 404)
+    {
+        BotController.findOneAndUpdate({ appId: req.params.appId }, {
+            // Add the given serverPrefix to the end of the servers array
+            servers: {
+                serverId: req.params.serverId,
+                prefix: req.body.serverPrefix,
+            }
+        }, { operator: "push" })
+        .then((result) => _sendBotUpdateSuccess(res, result, response.app))
+        .catch((err) => _sendBotUpdateError(res, err, response.app));
+    }
+
+    // An unknown error occured.
+    else
+    {
+        _sendBotUpdateError(res, null, response.app);
+    }
+}
 
 function _sendBotUpdateSuccess(res, result, app)
 {
