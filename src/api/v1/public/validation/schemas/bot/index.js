@@ -1,11 +1,11 @@
 const getSchemas = require("./get");
 const createSchemas = require("./create");
-//const upsertSchemas = require("./upsert");
+const updateSchemas = require("./update");
 
 
 
 module.exports = {
     ...getSchemas,
     ...createSchemas,
-    //...upsertSchemas,
+    ...updateSchemas,
 };
