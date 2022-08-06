@@ -74,11 +74,28 @@ app.get("/:appId", function(req, res)
 
 app.get("/:appId/:serverId", function(req, res)
 {
-    // TODO: Get info on a specific server that a discord bot is in.
-    Success.json({
-        res,
-        message: "Pong",
-    });
+    validateGetBotByAppAndServerIdPayload(req.params)
+    .then(function (_)
+    {
+        AppMicroservice.v1.get({ id: req.params.appId })
+        .then(function (result)
+        {
+            const app = result.data.data[0];
+
+            BotController.getMostRecent({ appId: req.params.appId }, {
+                // Only include one server element: the one with the given serverId
+                "servers": {
+                    "$elemMatch": {
+                        "serverId": req.params.serverId
+                    }
+                }
+            })
+            .then((result) => _sendBotGetSuccess(res, result, app))
+            .catch((err) => _sendBotGetError(res, err, app));
+        })
+        .catch((err) => _sendAppMicroserviceError(req, res, err, "retrieving"));
+    })
+    .catch((err) => _sendPayloadValidationError(res, err));
 });
 
 function _sendBotGetSuccess(res, result, app)
