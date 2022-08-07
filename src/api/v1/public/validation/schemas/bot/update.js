@@ -4,12 +4,12 @@ const botSchemas = require("./helpers");
 
 
 
-const updateBotSchema = JoiRequired.object({
+const upsertBotPrefixSchema = JoiRequired.object({
     serverPrefix: JoiRequired.string(),
 });
 
 
 
 module.exports = {
-    updateBotSchema,
+    upsertBotPrefixSchema,
 };

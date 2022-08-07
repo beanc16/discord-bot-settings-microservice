@@ -34,7 +34,7 @@ const {
     validateGetBotByAppIdPayload,
     validateGetBotByAppAndServerIdPayload,
     validateCreateBotPayload,
-    validateUpdateBotPayload,
+    validateUpsertBotPrefixPayload,
 } = require("../validation");
 
 
@@ -228,9 +228,31 @@ function _sendBotCreateError(res, err, app)
  * PATCHES *
  ***********/
 
+/*
+app.patch("/:appId", function(req, res)
+{
+    validateUpsertBotPrefixPayload(req.body)
+    .then(function (__)
+    {
+        _getBotByAppIdAndServerId(req, res, false)
+        .then(function (app)
+        {
+            // Update
+            _updateExistingPrefix(req, res, app);
+        })
+        .catch(function (response)
+        {
+            // Insert new prefix
+            _insertNewPrefixOnExistingBot(req, res, response);
+        });
+    })
+    .catch((err) => _sendPayloadValidationError(res, err));
+});
+*/
+
 app.patch("/:appId/:serverId", function(req, res)
 {
-    validateUpdateBotPayload(req.body)
+    validateUpsertBotPrefixPayload(req.body)
     .then(function (__)
     {
         _getBotByAppIdAndServerId(req, res, false)

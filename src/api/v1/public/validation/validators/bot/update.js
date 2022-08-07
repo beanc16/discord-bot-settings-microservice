@@ -1,13 +1,13 @@
-const { updateBotSchema } = require("../../schemas");
+const { upsertBotPrefixSchema } = require("../../schemas");
 const { validateJoiSchema } = require("@beanc16/joi-helpers");
 
 
 
-function validateUpdateBotPayload(payload)
+function validateUpsertBotPrefixPayload(payload)
 {
     return new Promise(function (resolve, reject)
     {
-        validateJoiSchema(updateBotSchema, payload)
+        validateJoiSchema(upsertBotPrefixSchema, payload)
             .then(function (value)
             {
                 resolve(value);
@@ -22,5 +22,5 @@ function validateUpdateBotPayload(payload)
 
 
 module.exports = {
-    validateUpdateBotPayload,
+    validateUpsertBotPrefixPayload,
 };
