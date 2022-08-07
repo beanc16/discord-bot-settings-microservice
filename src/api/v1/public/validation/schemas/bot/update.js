@@ -8,8 +8,13 @@ const upsertBotPrefixSchema = JoiRequired.object({
     serverPrefix: JoiRequired.string(),
 });
 
+const upsertDataSchema = JoiRequired.object({
+    data: botSchemas.dataObjRequired,
+});
+
 
 
 module.exports = {
     upsertBotPrefixSchema,
+    upsertDataSchema,
 };
