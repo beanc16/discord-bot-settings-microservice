@@ -34,6 +34,7 @@ const {
     validateGetBotByAppIdPayload,
     validateGetBotByAppAndServerIdPayload,
     validateCreateBotPayload,
+    validateUpsertBotDataPayload,
     validateUpsertBotPrefixPayload,
 } = require("../validation");
 
@@ -55,26 +56,41 @@ const {
  * GETS *
  ********/
 
-app.get("/:appId", function(req, res)
-{
-    validateGetBotByAppIdPayload(req.params)
-    .then(function (_)
-    {
-        AppMicroservice.v1.get({ id: req.params.appId })
-        .then(function (result)
-        {
-            const app = result.data.data[0];
-
-            BotController.getMostRecent({ appId: req.params.appId })
-            .then((result) => _sendBotGetSuccess(res, result, app))
-            .catch((err) => _sendBotGetError(res, err, app));
-        })
-        .catch((err) => _sendAppMicroserviceError(req, res, err, "retrieving"));
-    })
-    .catch((err) => _sendPayloadValidationError(res, err));
-});
+app.get("/:appId", _getBotByAppId);
 
 app.get("/:appId/:serverId", _getBotByAppIdAndServerId);
+
+async function _getBotByAppId(req, res, sendResponseOnBotDoesExist = true)
+{
+    return new Promise(function (resolve, reject)
+    {
+        validateGetBotByAppIdPayload(req.params)
+        .then(function (_)
+        {
+            AppMicroservice.v1.get({ id: req.params.appId })
+            .then(function (result)
+            {
+                const app = result.data.data[0];
+
+                BotController.getMostRecent({ appId: req.params.appId })
+                .then(function (result)
+                {
+                    if (sendResponseOnBotDoesExist)
+                    {
+                        _sendBotGetSuccess(res, result, app, true);
+                    }
+                    resolve(app);
+                })
+                .catch(function (err)
+                {
+                    _sendBotGetError(req, res, app);
+                });
+            })
+            .catch((err) => _sendAppMicroserviceError(req, res, err, "retrieving"));
+        })
+        .catch((err) => _sendPayloadValidationError(res, err));
+    });
+}
 
 async function _getBotByAppIdAndServerId(req, res, sendResponseOnServerDoesNotExist = true)
 {
@@ -137,12 +153,15 @@ async function _getBotByAppIdAndServerId(req, res, sendResponseOnServerDoesNotEx
     });
 }
 
-function _sendBotGetSuccess(res, result, app)
+function _sendBotGetSuccess(res, result, app, includeApp = false)
 {
+    const data = { ...result };
+    if (includeApp) data["app"] = app;
+
     Success.json({
         res,
         message: `Successfully retrieved a bot named ${app.displayName}`,
-        data: result,
+        data,
     });
 }
 
@@ -228,27 +247,17 @@ function _sendBotCreateError(res, err, app)
  * PATCHES *
  ***********/
 
-/*
 app.patch("/:appId", function(req, res)
 {
-    validateUpsertBotPrefixPayload(req.body)
+    validateUpsertBotDataPayload(req.body)
     .then(function (__)
     {
-        _getBotByAppIdAndServerId(req, res, false)
-        .then(function (app)
-        {
-            // Update
-            _updateExistingPrefix(req, res, app);
-        })
-        .catch(function (response)
-        {
-            // Insert new prefix
-            _insertNewPrefixOnExistingBot(req, res, response);
-        });
+        _getBotByAppId(req, res, false)
+        .then((app) => _updateData(req, res, app))
+        .catch((err) => _sendBotGetError(res, err));
     })
     .catch((err) => _sendPayloadValidationError(res, err));
 });
-*/
 
 app.patch("/:appId/:serverId", function(req, res)
 {
@@ -269,6 +278,20 @@ app.patch("/:appId/:serverId", function(req, res)
     })
     .catch((err) => _sendPayloadValidationError(res, err));
 });
+
+function _updateData(req, res, app)
+{
+    const dataToUpdate = Object.entries(req.body.data).reduce(function (acc, [key, val])
+    {
+        // Update only the given fields (else, other existing fields will be overwritten)
+        acc[`data.${key}`] = val;
+        return acc;
+    }, {});
+
+    BotController.findOneAndUpdate({ appId: req.params.appId }, dataToUpdate)
+    .then((result) => _sendBotUpdateSuccess(res, result, app))
+    .catch((err) => _sendBotUpdateError(res, err, app));
+}
 
 function _updateExistingPrefix(req, res, app)
 {
