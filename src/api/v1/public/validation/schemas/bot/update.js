@@ -9,7 +9,7 @@ const upsertBotPrefixSchema = JoiRequired.object({
 });
 
 const upsertDataSchema = JoiRequired.object({
-    data: botSchemas.dataObjRequired,
+    data: botSchemas.dataObjRequired.min(1),
 });
 
 
