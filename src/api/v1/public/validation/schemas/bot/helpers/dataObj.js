@@ -1,3 +1,4 @@
+/* eslint no-loss-of-precision: 0 */
 const Joi = require("joi");
 
 

@@ -62,10 +62,10 @@ app.get("/:appId/:serverId", _getBotByAppIdAndServerId);
 
 async function _getBotByAppId(req, res, sendResponseOnBotDoesExist = true)
 {
-    return new Promise(function (resolve, reject)
+    return new Promise(function (resolve/*, reject*/)
     {
         validateGetBotByAppIdPayload(req.params)
-        .then(function (_)
+        .then(function (/*_*/)
         {
             AppMicroservice.v1.get({ id: req.params.appId })
             .then(function (result)
@@ -83,7 +83,7 @@ async function _getBotByAppId(req, res, sendResponseOnBotDoesExist = true)
                 })
                 .catch(function (err)
                 {
-                    _sendBotGetError(req, res, app);
+                    _sendBotGetError(res, err, app);
                 });
             })
             .catch((err) => _sendAppMicroserviceError(req, res, err, "retrieving"));
@@ -97,7 +97,7 @@ async function _getBotByAppIdAndServerId(req, res, sendResponseOnServerDoesNotEx
     return new Promise(function (resolve, reject)
     {
         validateGetBotByAppAndServerIdPayload(req.params)
-        .then(function (_)
+        .then(function (/*_*/)
         {
             AppMicroservice.v1.get({ id: req.params.appId })
             .then(function (result)
@@ -197,7 +197,7 @@ function _sendBotGetServerDoesNotExistError(req, res, result, app)
 app.post("/create", function(req, res)
 {
     validateCreateBotPayload(req.body)
-    .then(function (_)
+    .then(function (/*_*/)
     {
         AppMicroservice.v1.create(req.body.app)
         .then(function (result)
@@ -250,7 +250,7 @@ function _sendBotCreateError(res, err, app)
 app.patch("/:appId", function(req, res)
 {
     validateUpsertBotDataPayload(req.body)
-    .then(function (__)
+    .then(function (/*_*/)
     {
         _getBotByAppId(req, res, false)
         .then((app) => _updateData(req, res, app))
@@ -262,7 +262,7 @@ app.patch("/:appId", function(req, res)
 app.patch("/:appId/:serverId", function(req, res)
 {
     validateUpsertBotPrefixPayload(req.body)
-    .then(function (__)
+    .then(function (/*_*/)
     {
         _getBotByAppIdAndServerId(req, res, false)
         .then(function (app)
